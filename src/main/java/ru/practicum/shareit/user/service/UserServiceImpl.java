@@ -26,7 +26,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UpdateUserDto update(UpdateUserDto user) {
-        if (user.getEmail() == null & user.getName() == null) {
+        if (user.getEmail() == null && user.getName() == null) {
             log.debug("Изменения отсутствуют - вернем тот же объект");
             return UserMapper.toUserDtoUpdate(repository.getUser(user.getId()));
         }

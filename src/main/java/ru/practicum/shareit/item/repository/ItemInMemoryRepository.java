@@ -30,7 +30,7 @@ public class ItemInMemoryRepository implements ItemRepository {
 
     @Override
     public Item updateItem(Long userId, Item item) {
-        if (!itemStorage.containsKey(item.getId()) | item.getId() == null) {
+        if (!itemStorage.containsKey(item.getId()) || item.getId() == null) {
             log.debug("Запрашиваемый при обновлении предмет не найден в хранилище");
             throw new DataNotFoundException("Запрашиваемый предмет: " + item + " не найден");
         }

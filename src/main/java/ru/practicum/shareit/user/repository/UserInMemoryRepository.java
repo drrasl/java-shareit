@@ -28,7 +28,7 @@ public class UserInMemoryRepository implements UserRepository {
 
     @Override
     public User update(User user) {
-        if (!userStorage.containsKey(user.getId()) | user.getId() == null) {
+        if (!userStorage.containsKey(user.getId()) || user.getId() == null) {
             log.debug("Запрашиваемый при обновлении пользователь не найден в хранилище");
             throw new DataNotFoundException("Запрашиваемый пользователь: " + user + " не найден");
         }
