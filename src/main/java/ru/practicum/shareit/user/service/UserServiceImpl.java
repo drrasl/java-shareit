@@ -3,6 +3,7 @@ package ru.practicum.shareit.user.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.practicum.shareit.exceptions.DataNotFoundException;
 import ru.practicum.shareit.user.dto.CreateUserDto;
 import ru.practicum.shareit.user.dto.UpdateUserDto;
 import ru.practicum.shareit.user.dto.UserDto;
@@ -19,13 +20,18 @@ public class UserServiceImpl implements UserService {
     @Override
     public CreateUserDto create(CreateUserDto user) {
         log.debug("Проверяем, что пользовательский email уникален");
-        repository.emailValidation(UserMapper.toUserCreate(user).getEmail());
+        repository.emailValidation(user.getEmail());
         log.debug("Пользователь отправлен в хранилище");
         return UserMapper.toUserDtoCreate(repository.create(UserMapper.toUserCreate(user)));
     }
 
     @Override
     public UpdateUserDto update(UpdateUserDto user) {
+        if (user.getId() == null) {
+            log.debug("У запрашиваемого пользователя не указан id");
+            throw new DataNotFoundException("У запрашиваемого пользователя не указан id");
+        }
+        UserDto userToCheck = getUser(user.getId());
         if (user.getEmail() == null && user.getName() == null) {
             log.debug("Изменения отсутствуют - вернем тот же объект");
             return UserMapper.toUserDtoUpdate(repository.getUser(user.getId()));
@@ -42,6 +48,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto delete(Long userId) {
+        UserDto user = getUser(userId);
         log.debug("Удаляем пользователя");
         return UserMapper.toUserDto(repository.delete(userId));
     }

@@ -9,6 +9,7 @@ import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.UpdateItemDto;
 import ru.practicum.shareit.item.mapper.ItemMapper;
 import ru.practicum.shareit.item.repository.ItemRepository;
+import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
 
 import java.util.Collections;
@@ -27,17 +28,15 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public ItemDto addNewItem(Long userId, CreateItemDto item) {
         log.debug("Проверяем, что пользователь с userId {} существует", userId);
-        if (!userId.equals(userRepository.getUser(userId).getId())) {
-            throw new DataNotFoundException("Пользователь с id " + userId + " не найден");
-        }
-        log.debug("Пользователь отправлен в хранилище");
-        return ItemMapper.toItemDto(itemRepository.addNewItem(userRepository.getUser(userId), ItemMapper.toItemCreate(item)));
+        User user = userRepository.getUser(userId);
+        log.debug("Предмет отправлен в хранилище");
+        return ItemMapper.toItemDto(itemRepository.addNewItem(user, ItemMapper.toItemCreate(item)));
     }
 
     @Override
     public ItemDto updateItem(Long userId, UpdateItemDto item) {
         log.debug("Проверяем, что вещь редактирует ее владелец с userId {}", userId);
-        if (!userId.equals(itemRepository.getItem(userId, item.getId()).getOwner().getId())) {
+        if (!userId.equals(itemRepository.getItem(item.getId()).getOwner().getId())) {
             throw new DataNotFoundException("Пользователь с id " + userId + " не может редактировать вещь " +
                     item + " так как не является ее владельцем");
         }
@@ -47,12 +46,16 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public ItemDto getItem(Long userId, Long itemId) {
+        log.debug("Проверяем, что пользователь с userId {} существует", userId);
+        User user = userRepository.getUser(userId);
         log.debug("Возвращаем предмет");
-        return ItemMapper.toItemDto(itemRepository.getItem(userId, itemId));
+        return ItemMapper.toItemDto(itemRepository.getItem(itemId));
     }
 
     @Override
     public List<ItemDto> getItems(Long userId) {
+        log.debug("Проверяем, что пользователь с userId {} существует", userId);
+        User user = userRepository.getUser(userId);
         log.debug("Возвращаем все предметы пользователя");
         return itemRepository.getItems(userId).stream()
                 .map(ItemMapper::toItemDto)
@@ -61,7 +64,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public List<ItemDto> findItems(Long userId, String text) {
-        if (text == null | text.isBlank()) {
+        if (text == null || text.isBlank()) {
             log.debug("query = null или пустой, возвращаем пустой список");
             return Collections.emptyList();
         }

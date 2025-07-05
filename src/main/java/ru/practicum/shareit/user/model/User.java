@@ -1,6 +1,5 @@
 package ru.practicum.shareit.user.model;
 
-import jakarta.validation.constraints.Email;
 import lombok.*;
 
 /**
@@ -18,7 +17,6 @@ public class User {
 
     private String name;
 
-    @Email
     private String email;
     //Поле должно быть уникальным
 }

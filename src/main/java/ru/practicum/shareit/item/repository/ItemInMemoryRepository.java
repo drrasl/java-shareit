@@ -30,10 +30,6 @@ public class ItemInMemoryRepository implements ItemRepository {
 
     @Override
     public Item updateItem(Long userId, Item item) {
-        if (!itemStorage.containsKey(item.getId()) || item.getId() == null) {
-            log.debug("Запрашиваемый при обновлении предмет не найден в хранилище");
-            throw new DataNotFoundException("Запрашиваемый предмет: " + item + " не найден");
-        }
         log.debug("Обновляем те поля, которые пришли не null, если null, то не обновляем");
         if (item.getName() != null) {
             itemStorage.get(item.getId()).setName(item.getName());
@@ -49,12 +45,12 @@ public class ItemInMemoryRepository implements ItemRepository {
     }
 
     @Override
-    public Item getItem(Long userId, Long itemId) {
-        if (!itemStorage.containsKey(itemId) | itemId == null) {
-            log.debug("Запрашиваемый при обновлении предмет не найден в хранилище");
+    public Item getItem(Long itemId) {
+        if (itemId == null || !itemStorage.containsKey(itemId)) {
+            log.debug("Запрашиваемый предмет не найден в хранилище");
             throw new DataNotFoundException("Запрашиваемый предмет c id: " + itemId + " не найден");
         }
-        log.debug("Возвращаем предмет по его Id {} пользователю {}", itemId, userId);
+        log.debug("Возвращаем предмет по его Id {} пользователю {}", itemId);
         return itemStorage.get(itemId);
     }
 
@@ -73,9 +69,9 @@ public class ItemInMemoryRepository implements ItemRepository {
         log.debug("Начат поиск вещи в репозитории по тексту {} пользователем {}", text, userId);
         return itemStorage.values().stream()
                 .filter(Objects::nonNull)
+                .filter(Item::getAvailable)
                 .filter(item -> item.getName().toLowerCase().contains(searchedText) ||
                         item.getDescription().toLowerCase().contains(searchedText))
-                .filter(item -> item.getAvailable().equals(Boolean.TRUE))
                 .toList();
     }
 }

@@ -28,10 +28,6 @@ public class UserInMemoryRepository implements UserRepository {
 
     @Override
     public User update(User user) {
-        if (!userStorage.containsKey(user.getId()) || user.getId() == null) {
-            log.debug("Запрашиваемый при обновлении пользователь не найден в хранилище");
-            throw new DataNotFoundException("Запрашиваемый пользователь: " + user + " не найден");
-        }
         log.debug("Проверяем, что пользовательский email уникален");
         emailValidation(user.getEmail());
         if (user.getEmail() == null) {
@@ -64,10 +60,6 @@ public class UserInMemoryRepository implements UserRepository {
 
     @Override
     public User delete(Long userId) {
-        if (!userStorage.containsKey(userId)) {
-            log.debug("Запрашиваемый для удаления пользователь не найден в хранилище");
-            throw new DataNotFoundException("Запрашиваемый пользователь с ID: " + userId + " не найден");
-        }
         User userToDelete = userStorage.get(userId);
         userStorage.remove(userId);
         log.debug("Пользователь найден и Удален из хранилища");

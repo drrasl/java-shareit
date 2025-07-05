@@ -13,6 +13,7 @@ import lombok.Data;
 @AllArgsConstructor
 @Builder
 public class UpdateItemDto {
+
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Long id;
     private String name;
