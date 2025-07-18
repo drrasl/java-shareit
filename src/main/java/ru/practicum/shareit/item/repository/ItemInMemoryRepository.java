@@ -11,15 +11,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+@Deprecated
 @Slf4j
 @Repository
-public class ItemInMemoryRepository implements ItemRepository {
+public class ItemInMemoryRepository {
 
     private final Map<Long, Item> itemStorage = new HashMap<>();
 
     private long generatedId = 0;
 
-    @Override
+
     public Item addNewItem(User user, Item item) {
         item.setId(++generatedId);
         item.setOwner(user);
@@ -28,7 +29,7 @@ public class ItemInMemoryRepository implements ItemRepository {
         return item;
     }
 
-    @Override
+
     public Item updateItem(Long userId, Item item) {
         log.debug("Обновляем те поля, которые пришли не null, если null, то не обновляем");
         if (item.getName() != null) {
@@ -44,7 +45,7 @@ public class ItemInMemoryRepository implements ItemRepository {
         return itemStorage.get(item.getId());
     }
 
-    @Override
+
     public Item getItem(Long itemId) {
         if (itemId == null || !itemStorage.containsKey(itemId)) {
             log.debug("Запрашиваемый предмет не найден в хранилище");
@@ -54,7 +55,7 @@ public class ItemInMemoryRepository implements ItemRepository {
         return itemStorage.get(itemId);
     }
 
-    @Override
+
     public List<Item> getItems(Long userId) {
         log.debug("Возвращаем все предметы пользователя из репозитория");
         return itemStorage.values().stream()
@@ -63,7 +64,7 @@ public class ItemInMemoryRepository implements ItemRepository {
                 .toList();
     }
 
-    @Override
+
     public List<Item> findItems(Long userId, String text) {
         String searchedText = text.toLowerCase();
         log.debug("Начат поиск вещи в репозитории по тексту {} пользователем {}", text, userId);

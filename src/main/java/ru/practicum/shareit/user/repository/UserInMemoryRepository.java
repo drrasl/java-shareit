@@ -10,15 +10,16 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+@Deprecated
 @Slf4j
 @Repository
-public class UserInMemoryRepository implements UserRepository {
+public class UserInMemoryRepository {
 
     private final Map<Long, User> userStorage = new HashMap<>();
 
     private long generatedId = 0;
 
-    @Override
+
     public User create(User user) {
         user.setId(++generatedId);
         userStorage.put(user.getId(), user);
@@ -26,7 +27,7 @@ public class UserInMemoryRepository implements UserRepository {
         return user;
     }
 
-    @Override
+
     public User update(User user) {
         log.debug("Проверяем, что пользовательский email уникален");
         emailValidation(user.getEmail());
@@ -48,7 +49,7 @@ public class UserInMemoryRepository implements UserRepository {
         return user;
     }
 
-    @Override
+
     public User getUser(Long userId) {
         if (!userStorage.containsKey(userId)) {
             log.debug("Запрашиваемый пользователь не найден в хранилище");
@@ -58,7 +59,7 @@ public class UserInMemoryRepository implements UserRepository {
         return userStorage.get(userId);
     }
 
-    @Override
+
     public User delete(Long userId) {
         User userToDelete = userStorage.get(userId);
         userStorage.remove(userId);
