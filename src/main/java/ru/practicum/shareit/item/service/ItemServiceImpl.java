@@ -9,7 +9,6 @@ import ru.practicum.shareit.booking.model.BookingOnlyDates;
 import ru.practicum.shareit.booking.model.BookingStatus;
 import ru.practicum.shareit.booking.repository.BookingRepository;
 import ru.practicum.shareit.exceptions.DataNotFoundException;
-import ru.practicum.shareit.exceptions.MissedSmthException;
 import ru.practicum.shareit.exceptions.WrongDateValidationException;
 import ru.practicum.shareit.item.dto.*;
 import ru.practicum.shareit.item.mapper.ItemMapper;

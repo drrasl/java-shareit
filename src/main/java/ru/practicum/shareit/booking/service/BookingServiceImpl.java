@@ -171,7 +171,7 @@ public class BookingServiceImpl implements BookingService {
                 .toList();
     }
 
-    private Booking getBookingById (Long bookingId) {
+    private Booking getBookingById(Long bookingId) {
         return bookingRepository.findById(bookingId).orElseThrow(
                 () -> new DataNotFoundException("Бронирования с таким id не найдено")
         );
