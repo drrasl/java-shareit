@@ -39,23 +39,23 @@ public class BookingServiceImpl implements BookingService {
     public BookingDto addBooking(Long userId, CreateBookingDto bookingDto) {
         log.debug("Проверяем, что пользователь с userId {} существует", userId);
         User user = userRepository.findById(userId).orElseThrow(
-                () -> new DataNotFoundException("Пользователь не найден"));
+                () -> new DataNotFoundException("Пользователь c userId " + userId + " не найден"));
         log.debug("Проверяем, что предмет для букинга с id {} существует", bookingDto.getItemId());
         Item item = itemRepository.findById(bookingDto.getItemId()).orElseThrow(
-                () -> new DataNotFoundException("Предмет не найден"));
+                () -> new DataNotFoundException("Предмет с id " + bookingDto.getItemId() + " не найден"));
         log.debug("Проверяем, что предмет доступен для букинга");
         if (!item.getAvailable()) {
             throw new WrongDateValidationException("Предмет не доступен для бронирования");
         }
         log.debug("Проверяем, что даты начала и конца букинга валидны");
-//        LocalDateTime now = LocalDateTime.now().minusSeconds(2);
+        LocalDateTime now = LocalDateTime.now().minusSeconds(5);
         if (bookingDto.getStart().equals(bookingDto.getEnd()) ||
 //      Я убрал данные проверки, так как в постмане создается время бронирования старт - сейчас, конец через секунду.
 //      Когда исполнение кода дойдет до этого места время now становится позже времени начала и конца бронирования.
 //      Я попробовал выше уменьшить время сравнения и заметил, что иногда и 2х секунд не хватает, поэтому просто скрыл
-//      две проверки ниже.
-//                bookingDto.getStart().isBefore(now) ||
-//                bookingDto.getEnd().isBefore(now) ||
+//      две проверки ниже. Оставлю 5 секунд, чтобы точно проходила проверка
+                bookingDto.getStart().isBefore(now) ||
+                bookingDto.getEnd().isBefore(now) ||
                 bookingDto.getEnd().isBefore(bookingDto.getStart())) {
             throw new WrongDateValidationException("Ошибка в датах начала и конца бронирования: даты не могут быть " +
                     "одинаковыми, не могут быть прошедшими или дата окончания не может быть раньше старта");
@@ -72,11 +72,12 @@ public class BookingServiceImpl implements BookingService {
     public BookingDto approvingOfBooking(Long userId, Long bookingId, Boolean approved) {
         log.debug("Проверяем, что пользователь {}, собирающийся установить статус букинга вещи," +
                 "является ее владельцем", userId);
-        Booking booking = bookingRepository.findById(bookingId).orElseThrow(
-                () -> new DataNotFoundException("Бронирования с таким id не найдено")
-        );
+        Booking booking = getBookingById(bookingId);
         if (!booking.getItem().getOwner().getId().equals(userId)) {
             throw new AccessNotAllowedException("Пользователь не является владельцем вещи и не может менять ее статус");
+        }
+        if (!booking.getStatus().equals(BookingStatus.WAITING)) {
+            throw new AccessNotAllowedException("Для изменения статуса бронирования статус вещи должен быть WAITING");
         }
         if (approved) {
             booking.setStatus(BookingStatus.APPROVED);
@@ -90,9 +91,7 @@ public class BookingServiceImpl implements BookingService {
     public BookingDto getBooking(Long userId, Long bookingId) {
         log.debug("Проверяем, что пользователь с userId {}, собирающийся просмотреть букинг на вещь," +
                 "является либо ее владельцем, либо автором бронирования", userId);
-        Booking booking = bookingRepository.findById(bookingId).orElseThrow(
-                () -> new DataNotFoundException("Бронирования с таким id не найдено")
-        );
+        Booking booking = getBookingById(bookingId);
         if (!booking.getBooker().getId().equals(userId) && !booking.getItem().getOwner().getId().equals(userId)) {
             throw new AccessNotAllowedException("Пользователь не является ни владельцем вещи," +
                     "ни автором букинга, поэтому не может просматривать бронирование");
@@ -104,7 +103,7 @@ public class BookingServiceImpl implements BookingService {
     public List<BookingDto> getBookingsByUserAndState(Long userId, BookingState state) {
         log.debug("Проверяем, что пользователь с userId {} существует", userId);
         if (!userRepository.existsById(userId)) {
-            throw new DataNotFoundException("Пользователь не найден");
+            throw new DataNotFoundException("Пользователь c userId " + userId + " не найден");
         }
         log.debug("Выдадим список букингов в зависимости от запрошенного состояния = {}", state);
         List<Booking> bookings;
@@ -138,9 +137,9 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public List<BookingDto> getBookingsForAllItemsOfOwner(Long ownerId, BookingState state) {
-        log.debug("Проверяем, что пользователь с userId {} существует", ownerId);
+        log.debug("Проверяем, что пользователь с ownerId {} существует", ownerId);
         if (!userRepository.existsById(ownerId)) {
-            throw new DataNotFoundException("Пользователь не найден");
+            throw new DataNotFoundException("Пользователь c ownerId " + ownerId + " не найден");
         }
         log.debug("Выдадим список букингов на вещь в зависимости от запрошенного состояния = {}", state);
         List<Booking> bookings;
@@ -170,5 +169,11 @@ public class BookingServiceImpl implements BookingService {
         return bookings.stream()
                 .map(BookingMapper::toBookingDto)
                 .toList();
+    }
+
+    private Booking getBookingById (Long bookingId) {
+        return bookingRepository.findById(bookingId).orElseThrow(
+                () -> new DataNotFoundException("Бронирования с таким id не найдено")
+        );
     }
 }

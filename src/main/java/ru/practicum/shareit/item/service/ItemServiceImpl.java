@@ -180,16 +180,13 @@ public class ItemServiceImpl implements ItemService {
 
     @Transactional
     public CommentDto addComment(Long userId, Long itemId, CreateCommentDto comment) {
-        if (comment.getText().isBlank()) {
-            throw new MissedSmthException("Текст комментария не может быть пустым");
-        }
         log.debug("Проверяем, что автор комментария с userId {} существует", userId);
         User author = userRepository.findById(userId).orElseThrow(
-                () -> new DataNotFoundException("Пользователь не найден")
+                () -> new DataNotFoundException("Пользователь с userId " + userId + " не найден")
         );
         log.debug("Проверяем, что предмет {} существует", itemId);
         Item item = itemRepository.findById(itemId).orElseThrow(
-                () -> new DataNotFoundException("Предмет не найден")
+                () -> new DataNotFoundException("Предмет с itemId " + itemId + " не найден")
         );
         log.debug("Проверяем, что пользователь {} действительно брал предмет {} в аренду", userId, itemId);
         boolean hasValidBooking = bookingRepository.existsByBookerIdAndItemIdAndStatusAndEndBefore(
