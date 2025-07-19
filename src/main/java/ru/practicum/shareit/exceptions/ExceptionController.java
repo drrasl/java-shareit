@@ -25,4 +25,16 @@ public class ExceptionController {
     public ErrorResponse handlerMissedSmthException(MissedSmthException e) {
         return new ErrorResponse(e.getMessage());
     }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST) // Error 400
+    public ErrorResponse handlerWrongDateValidationException(WrongDateValidationException e) {
+        return new ErrorResponse(e.getMessage());
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.FORBIDDEN) // Error 403
+    public ErrorResponse handlerAccessNotAllowedException(AccessNotAllowedException e) {
+        return new ErrorResponse(e.getMessage());
+    }
 }

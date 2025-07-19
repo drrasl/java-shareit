@@ -1,12 +1,7 @@
 package ru.practicum.shareit.request;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import lombok.*;
 import ru.practicum.shareit.user.model.User;
 
 import java.time.LocalDateTime;
@@ -15,21 +10,28 @@ import java.time.LocalDateTime;
  * TODO Sprint add-item-requests.
  */
 
+@Entity
+@Table(name = "requests")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@EqualsAndHashCode(of = "id")
 public class ItemRequest {
 
-    @Positive
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank
+    @Column(name = "description", nullable = false, length = 1000)
     private String description;
 
-    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "requestor_id", nullable = false)
+    @ToString.Exclude
     private User requestor;
     // пользователь, создавший запрос
 
-    private LocalDateTime created;
+    @Column(name = "created", nullable = false, updatable = false)
+    private LocalDateTime created = LocalDateTime.now();
 }
