@@ -20,4 +20,6 @@ public class CreateItemDto {
 
     @NotNull(message = "Доступность предмета обязательна для заполнения")
     private Boolean available;
+
+    private Long requestId;
 }

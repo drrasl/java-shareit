@@ -1,4 +1,4 @@
-package ru.practicum.shareit.request;
+package ru.practicum.shareit.request.model;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -33,5 +33,6 @@ public class ItemRequest {
     // пользователь, создавший запрос
 
     @Column(name = "created", nullable = false, updatable = false)
+    @Builder.Default
     private LocalDateTime created = LocalDateTime.now();
 }
