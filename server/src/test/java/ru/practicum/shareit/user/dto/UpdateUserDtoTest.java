@@ -31,24 +31,22 @@ class UpdateUserDtoTest {
         assertThat(result).extractingJsonPathStringValue("@.name").isEqualTo("updatedName");
         assertThat(result).extractingJsonPathStringValue("@.email").isEqualTo("updated@email.ru");
 
-        assertThat(result).isEqualToJson("""
-                {
-                    "id": 1,
-                    "name": "updatedName",
-                    "email": "updated@email.ru"
-                }
-                """);
+        assertThat(result).isEqualToJson(
+                "{\n" +
+                        "    \"id\": 1,\n" +
+                        "    \"name\": \"updatedName\",\n" +
+                        "    \"email\": \"updated@email.ru\"\n" +
+                        "}"
+        );
     }
 
     @Test
     void deserialize_updateUserDtoTest() throws Exception {
-        String jsonContent = """
-                {
-                    "id": 1,
-                    "name": "updatedName",
-                    "email": "updated@email.ru"
-                }
-                """;
+        String jsonContent = "{\n" +
+                "    \"id\": 1,\n" +
+                "    \"name\": \"updatedName\",\n" +
+                "    \"email\": \"updated@email.ru\"\n" +
+                "}";
 
         UpdateUserDto parsedDto = json.parse(jsonContent).getObject();
 

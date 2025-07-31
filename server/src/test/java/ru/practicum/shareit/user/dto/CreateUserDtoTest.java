@@ -36,13 +36,11 @@ class CreateUserDtoTest {
 
     @Test
     void deserialize_createUserDtoTest() throws Exception {
-        String jsonContent = """
-        {
-            "id": 1,
-            "name": "name",
-            "email": "email@email.ru"
-        }
-        """;
+        String jsonContent = "{\n" +
+                "\"id\": 1,\n" +
+                "\"name\": \"name\",\n" +
+                "\"email\": \"email@email.ru\"\n" +
+                "}";
 
         CreateUserDto parsedDto = json.parse(jsonContent).getObject();
 

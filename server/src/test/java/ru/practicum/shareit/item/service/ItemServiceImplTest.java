@@ -187,14 +187,30 @@ class ItemServiceImplTest {
         when(bookingRepository.findAllBookingsByItemId(itemId))
                 .thenReturn(List.of(
                         new BookingOnlyDates() {
-                            public Long getItemId() { return itemId; }
-                            public LocalDateTime getStart() { return now.minusDays(2); }
-                            public LocalDateTime getEnd() { return lastBookingEnd; }
+                            public Long getItemId() {
+                                return itemId;
+                            }
+
+                            public LocalDateTime getStart() {
+                                return now.minusDays(2);
+                            }
+
+                            public LocalDateTime getEnd() {
+                                return lastBookingEnd;
+                            }
                         },
                         new BookingOnlyDates() {
-                            public Long getItemId() { return itemId; }
-                            public LocalDateTime getStart() { return nextBookingStart; }
-                            public LocalDateTime getEnd() { return now.plusDays(2); }
+                            public Long getItemId() {
+                                return itemId;
+                            }
+
+                            public LocalDateTime getStart() {
+                                return nextBookingStart;
+                            }
+
+                            public LocalDateTime getEnd() {
+                                return now.plusDays(2);
+                            }
                         }
                 ));
 
@@ -262,15 +278,31 @@ class ItemServiceImplTest {
                 .build();
 
         BookingOnlyDates pastBooking = new BookingOnlyDates() {
-            public Long getItemId() { return 1L; }
-            public LocalDateTime getStart() { return now.minusDays(2); }
-            public LocalDateTime getEnd() { return now.minusDays(1); }
+            public Long getItemId() {
+                return 1L;
+            }
+
+            public LocalDateTime getStart() {
+                return now.minusDays(2);
+            }
+
+            public LocalDateTime getEnd() {
+                return now.minusDays(1);
+            }
         };
 
         BookingOnlyDates futureBooking = new BookingOnlyDates() {
-            public Long getItemId() { return 1L; }
-            public LocalDateTime getStart() { return now.plusDays(1); }
-            public LocalDateTime getEnd() { return now.plusDays(2); }
+            public Long getItemId() {
+                return 1L;
+            }
+
+            public LocalDateTime getStart() {
+                return now.plusDays(1);
+            }
+
+            public LocalDateTime getEnd() {
+                return now.plusDays(2);
+            }
         };
 
         Comment comment1 = Comment.builder()

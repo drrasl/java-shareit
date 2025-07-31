@@ -5,10 +5,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.json.JsonTest;
 import org.springframework.boot.test.json.JacksonTester;
 import org.springframework.boot.test.json.JsonContent;
-import ru.practicum.shareit.user.dto.UpdateUserDto;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 
 @JsonTest
 class UpdateItemDtoTest {
@@ -30,26 +28,24 @@ class UpdateItemDtoTest {
         assertThat(result).extractingJsonPathStringValue("@.name").isEqualTo("name");
         assertThat(result).extractingJsonPathStringValue("@.description").isEqualTo("description");
         assertThat(result).extractingJsonPathBooleanValue("@.available").isEqualTo(true);
-        assertThat(result).isEqualToJson("""
-                {
-                    "id": 1,
-                    "name": "name",
-                    "description": "description",
-                    "available": true
-                }
-                """);
+        assertThat(result).isEqualToJson(
+                "{\n" +
+                        "    \"id\": 1,\n" +
+                        "    \"name\": \"name\",\n" +
+                        "    \"description\": \"description\",\n" +
+                        "    \"available\": true\n" +
+                        "}"
+        );
     }
 
     @Test
     void deserialize_updateItemDtoTest() throws Exception {
-        String jsonContent = """
-    {
-        "id": 1,
-        "name": "name",
-        "description": "description",
-        "available": true
-    }
-    """;
+        String jsonContent = "{\n" +
+                "    \"id\": 1,\n" +
+                "    \"name\": \"name\",\n" +
+                "    \"description\": \"description\",\n" +
+                "    \"available\": true\n" +
+                "}";
 
         UpdateItemDto parsedDto = json.parse(jsonContent).getObject();
 

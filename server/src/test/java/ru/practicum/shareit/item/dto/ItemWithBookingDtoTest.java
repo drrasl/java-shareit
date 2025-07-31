@@ -54,24 +54,22 @@ class ItemWithBookingDtoTest {
 
     @Test
     void deserialize_itemWithBookingDtoTest() throws Exception {
-        String jsonContent = """
-                {
-                        "id": 1,
-                        "name": "name",
-                        "description": "description",
-                        "available": true,
-                        "lastBooking": "2000-12-12T12:12:00",
-                        "nextBooking": "2022-12-12T12:12:00",
-                        "comments": [
-                            {
-                            "id": 1,
-                            "text": "Great item!",
-                            "authorName": "John",
-                            "created": "2023-01-01T12:00:00"
-                            }
-                        ]
-                }
-                """;
+        String jsonContent = "{\n" +
+                "    \"id\": 1,\n" +
+                "    \"name\": \"name\",\n" +
+                "    \"description\": \"description\",\n" +
+                "    \"available\": true,\n" +
+                "    \"lastBooking\": \"2000-12-12T12:12:00\",\n" +
+                "    \"nextBooking\": \"2022-12-12T12:12:00\",\n" +
+                "    \"comments\": [\n" +
+                "        {\n" +
+                "            \"id\": 1,\n" +
+                "            \"text\": \"Great item!\",\n" +
+                "            \"authorName\": \"John\",\n" +
+                "            \"created\": \"2023-01-01T12:00:00\"\n" +
+                "        }\n" +
+                "    ]\n" +
+                "}";
 
         ItemWithBookingDto parsedDto = json.parse(jsonContent).getObject();
 
