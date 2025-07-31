@@ -2,11 +2,11 @@ package ru.practicum.shareit.user.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 
-@Data
-@Builder
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
 public class CreateUserDto {
 
     private Long id;

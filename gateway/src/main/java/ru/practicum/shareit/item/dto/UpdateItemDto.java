@@ -1,17 +1,12 @@
 package ru.practicum.shareit.item.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 
-/**
- * TODO Sprint add-controllers.
- */
 
-@Data
+@Getter
+@NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class UpdateItemDto {
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
