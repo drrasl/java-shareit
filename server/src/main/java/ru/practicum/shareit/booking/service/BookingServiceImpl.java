@@ -94,7 +94,7 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = getBookingById(bookingId);
         if (!booking.getBooker().getId().equals(userId) && !booking.getItem().getOwner().getId().equals(userId)) {
             throw new AccessNotAllowedException("Пользователь не является ни владельцем вещи," +
-                    "ни автором букинга, поэтому не может просматривать бронирование");
+                    " ни автором букинга, поэтому не может просматривать бронирование");
         }
         return BookingMapper.toBookingDto(booking);
     }

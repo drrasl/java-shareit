@@ -9,15 +9,18 @@ import ru.practicum.shareit.booking.model.BookingOnlyDates;
 import ru.practicum.shareit.booking.model.BookingStatus;
 import ru.practicum.shareit.booking.repository.BookingRepository;
 import ru.practicum.shareit.exceptions.DataNotFoundException;
+import ru.practicum.shareit.exceptions.WrongDateValidationException;
 import ru.practicum.shareit.item.dto.*;
 import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.CommentRepository;
 import ru.practicum.shareit.item.repository.ItemRepository;
+import ru.practicum.shareit.request.repository.ItemRequestRepository;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -41,6 +44,9 @@ class ItemServiceImplTest {
 
     @Mock
     private CommentRepository commentRepository;
+
+    @Mock
+    private ItemRequestRepository itemRequestRepository;
 
     @InjectMocks
     ItemServiceImpl itemService;
@@ -96,6 +102,34 @@ class ItemServiceImplTest {
     }
 
     @Test
+    void addNewItem_whenRequestNotFound_thenThrowDataNotFoundException() {
+        Long userId = 1L;
+        Long nonExistentRequestId = 999L;
+
+        CreateItemDto createItemDto = CreateItemDto.builder()
+                .name("Drill")
+                .description("Powerful electric drill")
+                .available(true)
+                .requestId(nonExistentRequestId)
+                .build();
+
+        User owner = User.builder()
+                .id(userId)
+                .name("Owner")
+                .build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(owner));
+        when(itemRequestRepository.findById(nonExistentRequestId)).thenReturn(Optional.empty());
+
+        // Проверка
+        assertThatThrownBy(() -> itemService.addNewItem(userId, createItemDto))
+                .isInstanceOf(DataNotFoundException.class)
+                .hasMessage("Запрос c id " + nonExistentRequestId + " не найден");
+
+        verify(itemRepository, never()).save(any());
+    }
+
+    @Test
     void updateItem_whenPartialUpdate_thenUpdateOnlyChangedFields() {
         Long userId = 1L;
         Long itemId = 10L;
@@ -130,6 +164,46 @@ class ItemServiceImplTest {
         ));
 
         verify(userRepository).existsById(userId);
+    }
+
+    @Test
+    void updateItem_whenItemIdIsNull_thenThrowDataNotFoundException() {
+        Long userId = 1L;
+
+        UpdateItemDto updateDto = UpdateItemDto.builder()
+                .name("New Name")
+                .description("New Description")
+                .available(false)
+                .build();
+
+        when(userRepository.existsById(userId)).thenReturn(true);
+
+        assertThatThrownBy(() -> itemService.updateItem(userId, updateDto))
+                .isInstanceOf(DataNotFoundException.class)
+                .hasMessage("У запрашиваемой на обновление вещи не указан id: вещь не найдена");
+
+        verify(itemRepository, never()).findById(any());
+        verify(itemRepository, never()).save(any());
+    }
+
+    @Test
+    void updateItem_whenItemNotFound_thenThrowDataNotFoundException() {
+        Long userId = 1L;
+        Long nonExistentItemId = 999L;
+
+        UpdateItemDto updateDto = UpdateItemDto.builder()
+                .id(nonExistentItemId)
+                .name("New Name")
+                .build();
+
+        when(userRepository.existsById(userId)).thenReturn(true);
+        when(itemRepository.findById(nonExistentItemId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> itemService.updateItem(userId, updateDto))
+                .isInstanceOf(DataNotFoundException.class)
+                .hasMessage("Вещь не найдена");
+
+        verify(itemRepository, never()).save(any());
     }
 
     @Test
@@ -248,6 +322,228 @@ class ItemServiceImplTest {
                     assertThat(c.getAuthorName()).isEqualTo("Owner");
                     assertThat(c.getCreated()).isBefore(now);
                 });
+    }
+
+    @Test
+    void getItem_whenItemNotFound_thenThrowDataNotFoundException() {
+        Long userId = 1L;
+        Long nonExistentItemId = 999L;
+
+        when(userRepository.existsById(userId)).thenReturn(true);
+        when(itemRepository.findById(nonExistentItemId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> itemService.getItem(userId, nonExistentItemId))
+                .isInstanceOf(DataNotFoundException.class)
+                .hasMessage("Предмет не найден");
+
+        verify(bookingRepository, never()).findAllBookingsByItemId(any());
+        verify(commentRepository, never()).findAllByItemId(any());
+    }
+
+    @Test
+    void getItem_whenOwnerRequests_withPastAndFutureBookings_thenReturnWithBothDates() {
+        Long ownerId = 1L;
+        Long itemId = 10L;
+        LocalDateTime now = LocalDateTime.now();
+
+        User owner = User.builder().id(ownerId).build();
+        Item item = Item.builder().id(itemId).owner(owner).build();
+
+        BookingOnlyDates pastBooking = new BookingOnlyDates() {
+            public Long getItemId() {
+                return itemId;
+            }
+
+            public LocalDateTime getStart() {
+                return now.minusDays(2);
+            }
+
+            public LocalDateTime getEnd() {
+                return now.minusDays(1);
+            }
+        };
+
+        BookingOnlyDates futureBooking = new BookingOnlyDates() {
+            public Long getItemId() {
+                return itemId;
+            }
+
+            public LocalDateTime getStart() {
+                return now.plusDays(1);
+            }
+
+            public LocalDateTime getEnd() {
+                return now.plusDays(2);
+            }
+        };
+
+        when(userRepository.existsById(ownerId)).thenReturn(true);
+        when(itemRepository.findById(itemId)).thenReturn(Optional.of(item));
+        when(bookingRepository.findAllBookingsByItemId(itemId))
+                .thenReturn(List.of(pastBooking, futureBooking));
+        when(commentRepository.findAllByItemId(itemId)).thenReturn(Collections.emptyList());
+
+        ItemWithBookingDto result = itemService.getItem(ownerId, itemId);
+
+        assertThat(result.getLastBooking()).isEqualTo(now.minusDays(1));
+        assertThat(result.getNextBooking()).isEqualTo(now.plusDays(1));
+    }
+
+    @Test
+    void getItem_whenOwnerRequests_withOnlyPastBookings_thenReturnOnlyLastBooking() {
+
+        Long ownerId = 1L;
+        Long itemId = 10L;
+        LocalDateTime now = LocalDateTime.now();
+
+        User owner = User.builder().id(ownerId).build();
+        Item item = Item.builder().id(itemId).owner(owner).build();
+
+        BookingOnlyDates pastBooking1 = new BookingOnlyDates() {
+            public Long getItemId() {
+                return itemId;
+            }
+
+            public LocalDateTime getStart() {
+                return now.minusDays(3);
+            }
+
+            public LocalDateTime getEnd() {
+                return now.minusDays(2);
+            }
+        };
+
+        BookingOnlyDates pastBooking2 = new BookingOnlyDates() {
+            public Long getItemId() {
+                return itemId;
+            }
+
+            public LocalDateTime getStart() {
+                return now.minusDays(1);
+            }
+
+            public LocalDateTime getEnd() {
+                return now.minusHours(1);
+            }
+        };
+
+        when(userRepository.existsById(ownerId)).thenReturn(true);
+        when(itemRepository.findById(itemId)).thenReturn(Optional.of(item));
+        when(bookingRepository.findAllBookingsByItemId(itemId))
+                .thenReturn(List.of(pastBooking1, pastBooking2));
+        when(commentRepository.findAllByItemId(itemId)).thenReturn(Collections.emptyList());
+
+        ItemWithBookingDto result = itemService.getItem(ownerId, itemId);
+
+        assertThat(result.getLastBooking()).isEqualTo(now.minusHours(1));
+        assertThat(result.getNextBooking()).isNull();
+    }
+
+    @Test
+    void getItem_whenOwnerRequests_withOnlyFutureBookings_thenReturnOnlyNextBooking() {
+
+        Long ownerId = 1L;
+        Long itemId = 10L;
+        LocalDateTime now = LocalDateTime.now();
+
+        User owner = User.builder().id(ownerId).build();
+        Item item = Item.builder().id(itemId).owner(owner).build();
+
+        BookingOnlyDates futureBooking1 = new BookingOnlyDates() {
+            public Long getItemId() {
+                return itemId;
+            }
+
+            public LocalDateTime getStart() {
+                return now.plusDays(1);
+            }
+
+            public LocalDateTime getEnd() {
+                return now.plusDays(2);
+            }
+        };
+
+        BookingOnlyDates futureBooking2 = new BookingOnlyDates() {
+            public Long getItemId() {
+                return itemId;
+            }
+
+            public LocalDateTime getStart() {
+                return now.plusDays(3);
+            }
+
+            public LocalDateTime getEnd() {
+                return now.plusDays(4);
+            }
+        };
+
+        when(userRepository.existsById(ownerId)).thenReturn(true);
+        when(itemRepository.findById(itemId)).thenReturn(Optional.of(item));
+        when(bookingRepository.findAllBookingsByItemId(itemId))
+                .thenReturn(List.of(futureBooking1, futureBooking2));
+        when(commentRepository.findAllByItemId(itemId)).thenReturn(Collections.emptyList());
+
+        ItemWithBookingDto result = itemService.getItem(ownerId, itemId);
+
+        assertThat(result.getLastBooking()).isNull();
+        assertThat(result.getNextBooking()).isEqualTo(now.plusDays(1));
+    }
+
+    @Test
+    void getItem_whenOwnerRequests_withCurrentBooking_thenReturnOnlyLastBooking() {
+
+        Long ownerId = 1L;
+        Long itemId = 10L;
+        LocalDateTime now = LocalDateTime.now();
+
+        User owner = User.builder().id(ownerId).build();
+        Item item = Item.builder().id(itemId).owner(owner).build();
+
+        BookingOnlyDates currentBooking = new BookingOnlyDates() {
+            public Long getItemId() {
+                return itemId;
+            }
+
+            public LocalDateTime getStart() {
+                return now.minusDays(1);
+            }
+
+            public LocalDateTime getEnd() {
+                return now.plusDays(1);
+            }
+        };
+
+        when(userRepository.existsById(ownerId)).thenReturn(true);
+        when(itemRepository.findById(itemId)).thenReturn(Optional.of(item));
+        when(bookingRepository.findAllBookingsByItemId(itemId))
+                .thenReturn(List.of(currentBooking));
+        when(commentRepository.findAllByItemId(itemId)).thenReturn(Collections.emptyList());
+
+        ItemWithBookingDto result = itemService.getItem(ownerId, itemId);
+
+        assertThat(result.getLastBooking()).isNull();
+        assertThat(result.getNextBooking()).isNull();
+    }
+
+    @Test
+    void getItem_whenNotOwnerRequests_thenReturnWithoutBookingDates() {
+
+        Long ownerId = 1L;
+        Long otherUserId = 2L;
+        Long itemId = 10L;
+
+        User owner = User.builder().id(ownerId).build();
+        Item item = Item.builder().id(itemId).owner(owner).build();
+
+        when(userRepository.existsById(otherUserId)).thenReturn(true);
+        when(itemRepository.findById(itemId)).thenReturn(Optional.of(item));
+        when(commentRepository.findAllByItemId(itemId)).thenReturn(Collections.emptyList());
+
+        ItemWithBookingDto result = itemService.getItem(otherUserId, itemId);
+
+        assertThat(result.getLastBooking()).isNull();
+        assertThat(result.getNextBooking()).isNull();
+        verify(bookingRepository, never()).findAllBookingsByItemId(any());
     }
 
     @Test
@@ -423,6 +719,45 @@ class ItemServiceImplTest {
     }
 
     @Test
+    void findItems_whenSearchTextIsNull_thenReturnEmptyList() {
+        Long userId = 1L;
+
+        when(userRepository.existsById(userId)).thenReturn(true);
+
+        List<ItemDto> result = itemService.findItems(userId, null);
+
+        assertThat(result).isEmpty();
+        verify(itemRepository, never()).search(any());
+    }
+
+    @Test
+    void findItems_whenSearchTextIsBlank_thenReturnEmptyList() {
+        Long userId = 1L;
+
+        when(userRepository.existsById(userId)).thenReturn(true);
+
+        List<ItemDto> result1 = itemService.findItems(userId, "");
+        List<ItemDto> result2 = itemService.findItems(userId, "   ");
+
+        assertThat(result1).isEmpty();
+        assertThat(result2).isEmpty();
+        verify(itemRepository, never()).search(any());
+    }
+
+    @Test
+    void findItems_whenSearchTextIsEmpty_thenReturnEmptyListAndLogDebug() {
+        Long userId = 1L;
+
+        when(userRepository.existsById(userId)).thenReturn(true);
+        ItemServiceImpl spyService = spy(itemService);
+
+        List<ItemDto> result = spyService.findItems(userId, "");
+
+        assertThat(result).isEmpty();
+        verify(itemRepository, never()).search(any());
+    }
+
+    @Test
     void addComment_whenValidData_thenReturnCommentDto() {
         // Given
         Long userId = 1L;
@@ -484,5 +819,64 @@ class ItemServiceImplTest {
                         comment.getAuthor().equals(author) &&
                         comment.getItem().equals(item)
         ));
+    }
+
+    @Test
+    void addComment_whenUserNotFound_thenThrowDataNotFoundException() {
+        Long userId = 1L;
+        Long itemId = 10L;
+        CreateCommentDto commentDto = new CreateCommentDto();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> itemService.addComment(userId, itemId, commentDto))
+                .isInstanceOf(DataNotFoundException.class)
+                .hasMessage("Пользователь с userId " + userId + " не найден");
+
+        verify(itemRepository, never()).findById(any());
+        verify(bookingRepository, never()).existsByBookerIdAndItemIdAndStatusAndEndBefore(any(), any(), any(), any());
+    }
+
+    @Test
+    void addComment_whenItemNotFound_thenThrowDataNotFoundException() {
+        Long userId = 1L;
+        Long itemId = 10L;
+        CreateCommentDto commentDto = new CreateCommentDto();
+        User author = User.builder().id(userId).build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(author));
+        when(itemRepository.findById(itemId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> itemService.addComment(userId, itemId, commentDto))
+                .isInstanceOf(DataNotFoundException.class)
+                .hasMessage("Предмет с itemId " + itemId + " не найден");
+
+        verify(bookingRepository, never()).existsByBookerIdAndItemIdAndStatusAndEndBefore(any(), any(), any(), any());
+    }
+
+    @Test
+    void addComment_whenNoValidBookings_thenThrowWrongDateValidationException() {
+        // Подготовка
+        Long userId = 1L;
+        Long itemId = 10L;
+        CreateCommentDto commentDto = new CreateCommentDto();
+        User author = User.builder().id(userId).build();
+        Item item = Item.builder().id(itemId).build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(author));
+        when(itemRepository.findById(itemId)).thenReturn(Optional.of(item));
+        when(bookingRepository.existsByBookerIdAndItemIdAndStatusAndEndBefore(
+                eq(userId),
+                eq(itemId),
+                eq(BookingStatus.APPROVED),
+                any(LocalDateTime.class)))
+                .thenReturn(false);
+
+        // Проверка
+        assertThatThrownBy(() -> itemService.addComment(userId, itemId, commentDto))
+                .isInstanceOf(WrongDateValidationException.class)
+                .hasMessage("У пользователя нет подтвержденных букингов на данную вещь");
+
+        verify(commentRepository, never()).save(any());
     }
 }
