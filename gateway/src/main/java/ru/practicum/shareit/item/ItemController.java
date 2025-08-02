@@ -12,6 +12,8 @@ import ru.practicum.shareit.item.dto.CreateCommentDto;
 import ru.practicum.shareit.item.dto.CreateItemDto;
 import ru.practicum.shareit.item.dto.UpdateItemDto;
 
+import java.util.Collections;
+
 @Slf4j
 @Controller
 @RequestMapping("/items")
@@ -53,6 +55,12 @@ public class ItemController {
     @GetMapping("/search")
     public ResponseEntity<Object> findItems(@RequestHeader("X-Sharer-User-Id") Long userId,
                                             @RequestParam String text) {
+        if (text == null || text.isBlank()) {
+            log.debug("query = null или пустой, возвращаем пустой список");
+
+            return ResponseEntity.ok(Collections.emptyList());
+        }
+
         log.debug("Клиент.Начат возврат списка предметов, содержащих в названии или описании текст {}, " +
                 "поиск осуществляет пользователь с id {}", text, userId);
         return itemClient.findItems(userId, text);

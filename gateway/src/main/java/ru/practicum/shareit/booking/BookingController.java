@@ -12,6 +12,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ru.practicum.shareit.booking.dto.BookItemRequestDto;
 import ru.practicum.shareit.booking.dto.BookingState;
+import ru.practicum.shareit.exceptions.WrongDateValidationException;
+
+import java.time.LocalDateTime;
 
 
 @Controller
@@ -25,6 +28,14 @@ public class BookingController {
     @PostMapping
     public ResponseEntity<Object> bookItem(@RequestHeader("X-Sharer-User-Id") long userId,
                                            @RequestBody @Valid BookItemRequestDto requestDto) {
+        log.debug("Проверяем, что даты начала и конца букинга валидны");
+        LocalDateTime now = LocalDateTime.now().minusSeconds(1);
+        //      Оставлю 1 секунду, чтобы точно проходила проверка
+        if (requestDto.getStart().equals(requestDto.getEnd()) || requestDto.getStart().isBefore(now) ||
+                requestDto.getEnd().isBefore(now) || requestDto.getEnd().isBefore(requestDto.getStart())) {
+            throw new WrongDateValidationException("Ошибка в датах начала и конца бронирования: даты не могут быть " +
+                    "одинаковыми, не могут быть прошедшими или дата окончания не может быть раньше старта");
+        }
         log.info("Creating booking {}, userId={}", requestDto, userId);
         return bookingClient.bookItem(userId, requestDto);
     }
@@ -34,6 +45,8 @@ public class BookingController {
                                              @PathVariable @Positive long bookingId,
                                              @RequestParam Boolean approved) {
         log.info("Confirming the status {} of the booking {} by Item owner {}", approved, bookingId, userId);
+
+
         return bookingClient.approvalOfBooking(userId, bookingId, approved);
     }
 

@@ -29,4 +29,11 @@ public class GlobalExceptionHandler {
         errors.put("error", ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
     }
+
+    @ExceptionHandler(WrongDateValidationException.class)
+    ResponseEntity<Map<String, String>> handleWrongDateValidationException(WrongDateValidationException ex) {
+        Map<String, String> errors = new HashMap<>();
+        errors.put("error", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
+    }
 }

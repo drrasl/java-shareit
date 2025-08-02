@@ -47,19 +47,6 @@ public class BookingServiceImpl implements BookingService {
         if (!item.getAvailable()) {
             throw new WrongDateValidationException("Предмет не доступен для бронирования");
         }
-        log.debug("Проверяем, что даты начала и конца букинга валидны");
-        LocalDateTime now = LocalDateTime.now().minusSeconds(5);
-        if (bookingDto.getStart().equals(bookingDto.getEnd()) ||
-//      Я убрал данные проверки, так как в постмане создается время бронирования старт - сейчас, конец через секунду.
-//      Когда исполнение кода дойдет до этого места время now становится позже времени начала и конца бронирования.
-//      Я попробовал выше уменьшить время сравнения и заметил, что иногда и 2х секунд не хватает, поэтому просто скрыл
-//      две проверки ниже. Оставлю 5 секунд, чтобы точно проходила проверка
-                bookingDto.getStart().isBefore(now) ||
-                bookingDto.getEnd().isBefore(now) ||
-                bookingDto.getEnd().isBefore(bookingDto.getStart())) {
-            throw new WrongDateValidationException("Ошибка в датах начала и конца бронирования: даты не могут быть " +
-                    "одинаковыми, не могут быть прошедшими или дата окончания не может быть раньше старта");
-        }
         Booking booking = BookingMapper.toBookingCreate(bookingDto);
         booking.setBooker(user);
         booking.setItem(item);

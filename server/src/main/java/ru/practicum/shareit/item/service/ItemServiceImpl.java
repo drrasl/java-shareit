@@ -168,10 +168,6 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public List<ItemDto> findItems(Long userId, String text) {
         isUserExist(userId);
-        if (text == null || text.isBlank()) {
-            log.debug("query = null или пустой, возвращаем пустой список");
-            return Collections.emptyList();
-        }
         return itemRepository.search(text).stream()
                 .filter(Objects::nonNull)
                 .map(ItemMapper::toItemDto)

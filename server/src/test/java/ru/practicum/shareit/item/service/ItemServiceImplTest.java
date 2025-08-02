@@ -719,45 +719,6 @@ class ItemServiceImplTest {
     }
 
     @Test
-    void findItems_whenSearchTextIsNull_thenReturnEmptyList() {
-        Long userId = 1L;
-
-        when(userRepository.existsById(userId)).thenReturn(true);
-
-        List<ItemDto> result = itemService.findItems(userId, null);
-
-        assertThat(result).isEmpty();
-        verify(itemRepository, never()).search(any());
-    }
-
-    @Test
-    void findItems_whenSearchTextIsBlank_thenReturnEmptyList() {
-        Long userId = 1L;
-
-        when(userRepository.existsById(userId)).thenReturn(true);
-
-        List<ItemDto> result1 = itemService.findItems(userId, "");
-        List<ItemDto> result2 = itemService.findItems(userId, "   ");
-
-        assertThat(result1).isEmpty();
-        assertThat(result2).isEmpty();
-        verify(itemRepository, never()).search(any());
-    }
-
-    @Test
-    void findItems_whenSearchTextIsEmpty_thenReturnEmptyListAndLogDebug() {
-        Long userId = 1L;
-
-        when(userRepository.existsById(userId)).thenReturn(true);
-        ItemServiceImpl spyService = spy(itemService);
-
-        List<ItemDto> result = spyService.findItems(userId, "");
-
-        assertThat(result).isEmpty();
-        verify(itemRepository, never()).search(any());
-    }
-
-    @Test
     void addComment_whenValidData_thenReturnCommentDto() {
         // Given
         Long userId = 1L;

@@ -80,7 +80,7 @@ public class ItemRequestServiceImpl implements ItemRequestService {
         User user = isUserExisted(userId);
         log.debug("Получаем запрос {}", requestId);
         ItemRequest request = itemRequestRepository.findById(requestId).orElseThrow(
-                () -> new DataNotFoundException("Запрос не найден"));
+                () -> new DataNotFoundException("Запрос с id " + requestId + " не найден"));
         List<ItemWithRequestDto> items = itemRepository.findByRequestId(requestId).stream()
                 .map(ItemMapper::toItemWithRequestDto)
                 .toList();
@@ -92,6 +92,6 @@ public class ItemRequestServiceImpl implements ItemRequestService {
     private User isUserExisted(Long userId) {
         log.debug("Проверяем, что пользователь с userId {} существует", userId);
         return userRepository.findById(userId).orElseThrow(
-                () -> new DataNotFoundException("Пользователь не найден"));
+                () -> new DataNotFoundException("Пользователь с id " + userId + " не найден"));
     }
 }
